@@ -1,6 +1,7 @@
 package com.android.asynctasksample;
 
 import android.app.Activity;
+import android.app.ProgressDialog;
 import android.graphics.Bitmap;
 import android.os.AsyncTask;
 import android.os.Bundle;
@@ -8,6 +9,7 @@ import android.view.View;
 import android.view.Window;
 import android.widget.AdapterView;
 import android.widget.AdapterView.OnItemClickListener;
+import android.widget.Button;
 import android.widget.Gallery;
 import android.widget.ImageView;
 import android.widget.Toast;
@@ -24,6 +26,9 @@ public class AsyncTaskSample extends Activity {
 	};
 	
 	private int mImagePosition;
+	
+	//6.2 ダウンロード状況を表示するためのプログレスダイアログ
+	private ProgressDialog mProgressDialog;
 	
 	@Override
 	public void onCreate(Bundle savedInstanceState){
@@ -80,6 +85,27 @@ public class AsyncTaskSample extends Activity {
 		//ImageViewインスタンス取得
 		ImageView iv = (ImageView)this.findViewById(R.id.imageview);
 		iv.setImageResource(this.mThumbIds[position]);
+		
+		//＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊
+		//6.3 使わない機能は無効にする
+		//＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊
+		
+		//Buttonインスタンス取得
+		Button prevBtn = (Button)this.findViewById(R.id.prevBtn);
+		Button nextBtn = (Button)this.findViewById(R.id.nextBtn);
+		
+		//先頭の画像が表示されている場合
+		if(position == 0){
+			prevBtn.setEnabled(false);
+		//末尾の画像が表示されている場合
+		}else if(position == (this.mThumbIds.length - 1)){
+			nextBtn.setEnabled(false);
+		//上記以外の画像が表示されている場合
+		}else{
+			prevBtn.setEnabled(true);
+			nextBtn.setEnabled(true);
+		}
+		//＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊
 	}
 	
 	//Galleryに画像を設定
@@ -107,7 +133,7 @@ public class AsyncTaskSample extends Activity {
 	//内部クラス：DownloadFilesTaskクラス
 	//＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊
 	public class DownloadFilesTask extends AsyncTask<String, Integer, Bitmap[]> {
-
+		
 		@Override
 		//1.タスク実行後、呼び出されるメソッド
 		protected void onPreExecute(){
@@ -116,6 +142,12 @@ public class AsyncTaskSample extends Activity {
 			
 			//プログレスバーの値を 0 % に設定
 			AsyncTaskSample.this.setProgress(0); //0から10000
+			
+			//6.2 プログレスダイアログを表示する
+			AsyncTaskSample.this.mProgressDialog = new ProgressDialog(AsyncTaskSample.this);
+			AsyncTaskSample.this.mProgressDialog.setProgressStyle(ProgressDialog.STYLE_SPINNER);
+			AsyncTaskSample.this.mProgressDialog.setTitle("Now downloading...");
+			AsyncTaskSample.this.mProgressDialog.show();	//表示
 		}
 		
 		@Override
@@ -146,6 +178,9 @@ public class AsyncTaskSample extends Activity {
 		protected void onProgressUpdate(Integer... progress){
 			//プログレスバーの値を設定
 			AsyncTaskSample.this.setProgress((int) ((progress[0]/(float)progress[1]) * 10000));
+			
+			//プログレスダイアログのメッセージを更新する
+			AsyncTaskSample.this.mProgressDialog.setMessage(progress[0] + " / " + progress[1]);
 		}
 		
 		@Override
@@ -159,7 +194,9 @@ public class AsyncTaskSample extends Activity {
 			
 			//プログレスバーを非表示設定
 			AsyncTaskSample.this.setProgressBarVisibility(false);
+			
+			//プログレスダイアログを閉じる
+			AsyncTaskSample.this.mProgressDialog.dismiss();
 		}
 	}
-	
 }
